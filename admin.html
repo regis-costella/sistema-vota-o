@@ -48,6 +48,26 @@
                 }
             }
         }
+        // Pega os votos do banco de dados e exibe no painel
+function mostrarResultados() {
+  const votosRef = ref(database, "votos");
+  get(votosRef).then((snapshot) => {
+    const votos = snapshot.val();
+    document.querySelector("#resultado").innerHTML = `
+      Opção A: ${votos.opcaoA || 0} votos <br>
+      Opção B: ${votos.opcaoB || 0} votos
+    `;
+  });
+}
+
+// Botão para reiniciar votação
+document.querySelector("#resetar").addEventListener("click", () => {
+  set(ref(database, "votos"), { opcaoA: 0, opcaoB: 0 });
+  mostrarResultados();
+});
+
+mostrarResultados();
+
 
         function reiniciarVotacao() {
             if (confirm("Tem certeza que deseja reiniciar a votação? Isso apagará todos os votos.")) {

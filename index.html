@@ -21,7 +21,13 @@
     </div>
 
     <script>
-        function votar(opcao) {
+        FileInputStream serviceAccount = new FileInputStream("path/to/serviceAccountKey.json");
+
+        FirebaseOptions options = new FirebaseOptions.Builder().setCredentials(GoogleCredentials.fromStream(serviceAccount)).setDatabaseUrl("https://sistemavotacao-4a2bb-default-rtdb.firebaseio.com").build();
+
+FirebaseApp.initializeApp(options);
+
+            function votar(opcao) {
             let votos = JSON.parse(localStorage.getItem("votos")) || {};
             votos[opcao] = (votos[opcao] || 0) + 1;
             localStorage.setItem("votos", JSON.stringify(votos));
