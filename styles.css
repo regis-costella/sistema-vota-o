@@ -1,0 +1,49 @@
+/* Estilo geral da página */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+#votacao {
+    margin: 20px;
+    text-align: center;
+}
+
+.opcoes-voto button {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.opcoes-voto button:hover {
+    background-color: #45a049;
+}
+
+#resultados {
+    margin-top: 30px;
+    text-align: center;
+}
+
+#controle {
+    margin-top: 20px;
+    text-align: center;
+}
+
+p {
+    font-size: 18px;
+}
