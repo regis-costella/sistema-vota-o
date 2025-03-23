@@ -3,32 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Votação</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Admin - Resultados</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-r from-blue-400 to-blue-700 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-        <h1 class="text-4xl font-bold mb-4 text-gray-800">Sistema de Votação</h1>
-        <p class="text-gray-600 mb-6">Escolha uma opção abaixo e participe da votação!</p>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
 
-        <button onclick="votar('Opção A')" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700 mb-2">Votar na Opção A</button>
-        <button onclick="votar('Opção B')" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mb-2">Votar na Opção B</button>
-        <button onclick="votar('Opção C')" class="w-full bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700 mb-2">Votar na Opção C</button>
+<div class="container bg-white p-6 rounded-xl shadow-lg text-center w-96">
+    <h1 class="text-2xl font-bold mb-4">Painel do Administrador</h1>
 
-        <p id="mensagem" class="mt-4 text-gray-700"></p>
-
-        <a href="admin.html" class="mt-6 inline-block text-blue-500 hover:text-blue-700">Acesso do Administrador</a>
+    <div class="space-y-2 text-gray-600 mb-4">
+        <p>✅ Votos "Sim": <span id="result-sim" class="font-bold text-green-500">0</span></p>
+        <p>❌ Votos "Não": <span id="result-nao" class="font-bold text-red-500">0</span></p>
+        <p>⚠️ Abstenções: <span id="result-abstencao" class="font-bold text-yellow-500">0</span></p>
     </div>
 
-    <script>
-        function votar(opcao) {
-            let votos = JSON.parse(localStorage.getItem("votos")) || {};
-            votos[opcao] = (votos[opcao] || 0) + 1;
-            localStorage.setItem("votos", JSON.stringify(votos));
-            document.getElementById("mensagem").innerText = `Você votou em ${opcao}!`;
-        }
-    </script>
+    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4" onclick="reiniciarVotacao()">Reiniciar Votação</button>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
+
 
 
