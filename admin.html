@@ -3,26 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Resultados</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+    <title>Painel do Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+          apiKey: "SUA-API-KEY",
+          authDomain: "SEU-PROJETO.firebaseapp.com",
+          databaseURL: "https://SEU-PROJETO.firebaseio.com",
+          projectId: "SEU-PROJETO",
+          storageBucket: "SEU-PROJETO.appspot.com",
+          messagingSenderId: "SENDER-ID",
+          appId: "APP-ID"
+        };
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Atualiza os votos em tempo real
+        const votosRef = ref(database, "votos");
+        onValue(votosRef, (snapshot) => {
+          const votos = snapshot.val() || { opcaoA: 0, opcaoB: 0 };
+          document.querySelector("#resultado").innerHTML = `
+            <p class="text-green-600 font-bold">Opção A: ${votos.opcaoA} votos</p>
+            <p class="text-blue-600 font-bold">Opção B: ${votos.opcaoB} votos</p>
+          `;
+        });
+
+        // Botão de reiniciar votação
+        document.querySelector("#resetar").addEventListener("click", () => {
+          set(ref(database, "votos"), { opcaoA: 0, opcaoB: 0 });
+        });
+
+        // Controle de login
+        document.querySelector("#entrar").addEventListener("click", () => {
+          const senha = document.querySelector("#senha").value;
+          const senhaCorreta = "admin123";
+
+          if (senha === senhaCorreta) {
+            document.querySelector("#login").style.display = "none";
+            document.querySelector("#painel-admin").style.display = "block";
+          } else {
+            alert("Senha incorreta!");
+          }
+        });
+    </script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
+<body class="bg-gray-200">
 
-<div class="container bg-white p-6 rounded-xl shadow-lg text-center w-96">
-    <h1 class="text-2xl font-bold mb-4">Painel do Administrador</h1>
-
-    <div class="space-y-2 text-gray-600 mb-4">
-        <p>✅ Votos "Sim": <span id="result-sim" class="font-bold text-green-500">0</span></p>
-        <p>❌ Votos "Não": <span id="result-nao" class="font-bold text-red-500">0</span></p>
-        <p>⚠️ Abstenções: <span id="result-abstencao" class="font-bold text-yellow-500">0</span></p>
+    <!-- Tela de Login -->
+    <div id="login" class="min-h-screen flex items-center justify-center">
+      <div class="bg-white p-6 rounded shadow-md w-80">
+        <h2 class="text-xl font-semibold mb-4 text-center text-gray-700">Login do Admin</h2>
+        <input type="password" id="senha" placeholder="Digite a senha" class="w-full border p-2 rounded mb-2" />
+        <button id="entrar" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">Entrar</button>
+      </div>
     </div>
 
-    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4" onclick="reiniciarVotacao()">Reiniciar Votação</button>
-</div>
+    <!-- Painel do Administrador -->
+    <div id="painel-admin" class="min-h-screen flex items-center justify-center hidden">
+      <div class="bg-white p-8 rounded shadow-md w-96">
+        <h1 class="text-2xl font-bold mb-4 text-center text-blue-500">Painel do Administrador</h1>
+        <div id="resultado" class="text-lg mb-4 text-gray-700">Carregando resultados...</div>
+        <button id="resetar" class="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition">Reiniciar Votação</button>
+      </div>
+    </div>
 
-<script src="script.js"></script>
 </body>
 </html>
-
-
-
