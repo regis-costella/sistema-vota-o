@@ -3,75 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Administrador</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+    <title>Painel de Administração - Sistema de Votação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-blue-400 to-blue-700 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+        <h1 class="text-4xl font-bold mb-4 text-gray-800">Painel do Administrador</h1>
+        <p class="text-gray-600 mb-6">Aqui você pode visualizar os resultados da votação.</p>
 
-        // Configuração do Firebase
-        const firebaseConfig = {
-          apiKey: "SUA-API-KEY",
-          authDomain: "SEU-PROJETO.firebaseapp.com",
-          databaseURL: "https://SEU-PROJETO.firebaseio.com",
-          projectId: "SEU-PROJETO",
-          storageBucket: "SEU-PROJETO.appspot.com",
-          messagingSenderId: "SENDER-ID",
-          appId: "APP-ID"
-        };
+        <!-- Resultados da votação -->
+        <div id="resultados" class="mb-6 text-gray-800">
+            <p>Carregando votos...</p>
+        </div>
 
-        // Inicializa o Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        <button onclick="reiniciarVotacao()" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 mb-2">Reiniciar Votação</button>
 
-        // Atualiza os votos em tempo real
-        const votosRef = ref(database, "votos");
-        onValue(votosRef, (snapshot) => {
-          const votos = snapshot.val() || { opcaoA: 0, opcaoB: 0 };
-          document.querySelector("#resultado").innerHTML = `
-            <p class="text-green-600 font-bold">Opção A: ${votos.opcaoA} votos</p>
-            <p class="text-blue-600 font-bold">Opção B: ${votos.opcaoB} votos</p>
+        <a href="index.html" class="mt-6 inline-block text-blue-500 hover:text-blue-700">Voltar para a Votação</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+    <script>
+      // Configuração do Firebase (substitua com suas credenciais)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCWSmAtAl_fdi2G4Q_-PCttLU7G8WTZ0ZM",
+        authDomain: "sistemavotacao-4a2bb.firebaseapp.com",
+        databaseURL: "https://sistemavotacao-4a2bb-default-rtdb.firebaseio.com",
+        projectId: "sistemavotacao-4a2bb",
+        storageBucket: "sistemavotacao-4a2bb.firebasestorage.app",
+        messagingSenderId: "878218533705",
+        appId: "1:878218533705:web:89149d476dde3396529898"
+      };
+
+      // Inicializa o Firebase
+      firebase.initializeApp(firebaseConfig);
+
+      // Função para atualizar os resultados da votação em tempo real
+      function atualizarResultados() {
+        const resultadosRef = firebase.database().ref("votos");
+        resultadosRef.on("value", (snapshot) => {
+          const votos = snapshot.val();
+          document.getElementById("resultados").innerHTML = `
+            <p>Opção A: ${votos?.A || 0} votos</p>
+            <p>Opção B: ${votos?.B || 0} votos</p>
+            <p>Opção C: ${votos?.C || 0} votos</p>
           `;
         });
+      }
 
-        // Botão de reiniciar votação
-        document.querySelector("#resetar").addEventListener("click", () => {
-          set(ref(database, "votos"), { opcaoA: 0, opcaoB: 0 });
+      // Função para reiniciar a votação
+      function reiniciarVotacao() {
+        const votosRef = firebase.database().ref("votos");
+        votosRef.set({
+          A: 0,
+          B: 0,
+          C: 0
+        }).then(() => {
+          alert("Votação reiniciada!");
+        }).catch((error) => {
+          alert("Erro ao reiniciar a votação: " + error.message);
         });
+      }
 
-        // Controle de login
-        document.querySelector("#entrar").addEventListener("click", () => {
-          const senha = document.querySelector("#senha").value;
-          const senhaCorreta = "admin123";
-
-          if (senha === senhaCorreta) {
-            document.querySelector("#login").style.display = "none";
-            document.querySelector("#painel-admin").style.display = "block";
-          } else {
-            alert("Senha incorreta!");
-          }
-        });
+      // Ativa a atualização em tempo real dos resultados
+      atualizarResultados();
     </script>
-</head>
-<body class="bg-gray-200">
-
-    <!-- Tela de Login -->
-    <div id="login" class="min-h-screen flex items-center justify-center">
-      <div class="bg-white p-6 rounded shadow-md w-80">
-        <h2 class="text-xl font-semibold mb-4 text-center text-gray-700">Login do Admin</h2>
-        <input type="password" id="senha" placeholder="Digite a senha" class="w-full border p-2 rounded mb-2" />
-        <button id="entrar" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">Entrar</button>
-      </div>
-    </div>
-
-    <!-- Painel do Administrador -->
-    <div id="painel-admin" class="min-h-screen flex items-center justify-center hidden">
-      <div class="bg-white p-8 rounded shadow-md w-96">
-        <h1 class="text-2xl font-bold mb-4 text-center text-blue-500">Painel do Administrador</h1>
-        <div id="resultado" class="text-lg mb-4 text-gray-700">Carregando resultados...</div>
-        <button id="resetar" class="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition">Reiniciar Votação</button>
-      </div>
-    </div>
-
 </body>
 </html>
+

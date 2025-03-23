@@ -11,6 +11,9 @@
         <h1 class="text-4xl font-bold mb-4 text-gray-800">Sistema de Votação</h1>
         <p class="text-gray-600 mb-6">Escolha uma opção abaixo e participe da votação!</p>
 
+        <!-- Mensagem de status do voto -->
+        <p id="status" class="mt-4 text-red-600"></p>
+
         <button onclick="votar('Opção A')" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700 mb-2">Votar na Opção A</button>
         <button onclick="votar('Opção B')" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mb-2">Votar na Opção B</button>
         <button onclick="votar('Opção C')" class="w-full bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700 mb-2">Votar na Opção C</button>
@@ -21,14 +24,62 @@
     </div>
 
     <script>
+        // Função para verificar se o usuário já votou
+        function verificarVoto() {
+            const usuarioVotou = localStorage.getItem("usuarioVotou");
+            return usuarioVotou === 'true';  // Retorna true se o usuário já votou
+        }
+
+        // Função para registrar o voto
         function votar(opcao) {
+            if (verificarVoto()) {
+                document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
+                return;  // Se já votou, não permite novo voto
+            }
+
             let votos = JSON.parse(localStorage.getItem("votos")) || {};
             votos[opcao] = (votos[opcao] || 0) + 1;
             localStorage.setItem("votos", JSON.stringify(votos));
+
+            // Registra que o usuário votou
+            localStorage.setItem("usuarioVotou", 'true');
             document.getElementById("mensagem").innerText = `Você votou em ${opcao}!`;
+            document.getElementById("status").innerText = "";  // Limpa a mensagem de erro
         }
+
+        // Exibe uma mensagem caso o usuário já tenha votado
+        if (verificarVoto()) {
+            document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
+        }
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    
+    <script>
+      // Configuração do Firebase (coloque suas credenciais aqui)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCWSmAtAl_fdi2G4Q_-PCttLU7G8WTZ0ZM",
+        authDomain: "sistemavotacao-4a2bb.firebaseapp.com",
+        databaseURL: "https://sistemavotacao-4a2bb-default-rtdb.firebaseio.com",
+        projectId: "sistemavotacao-4a2bb",
+        storageBucket: "sistemavotacao-4a2bb.firebasestorage.app",
+        messagingSenderId: "878218533705",
+        appId: "1:878218533705:web:89149d476dde3396529898"
+      };
+
+      // Inicializa o Firebase
+      firebase.initializeApp(firebaseConfig);
+    
+      // Função para registrar votos no Firebase
+      function votarFirebase(opcao) {
+        const votosRef = firebase.database().ref("votos/" + opcao);
+        votosRef.transaction((votos) => (votos || 0) + 1);
+        alert("Voto registrado no Firebase!");
+      }
     </script>
 </body>
 </html>
+
 
 
