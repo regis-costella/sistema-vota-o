@@ -3,29 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Administração - Sistema de Votação</title>
+    <title>Painel do Administrador</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-r from-blue-400 to-blue-700 min-h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
         <h1 class="text-4xl font-bold mb-4 text-gray-800">Painel do Administrador</h1>
-        <p class="text-gray-600 mb-6">Aqui você pode visualizar os resultados da votação.</p>
+        <p class="text-gray-600 mb-6">Por favor, insira a senha para acessar o painel:</p>
 
-        <!-- Resultados da votação -->
-        <div id="resultados" class="mb-6 text-gray-800">
-            <p>Carregando votos...</p>
+        <input type="password" id="senha" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Senha">
+        <button onclick="verificarSenha()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">Entrar</button>
+
+        <p id="mensagem" class="mt-4 text-red-600"></p>
+
+        <div id="resultado" class="mt-6 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Resultados da Votação:</h2>
+            <p>Opção A: <span id="resultadoA">0</span> votos</p>
+            <p>Opção B: <span id="resultadoB">0</span> votos</p>
+            <p>Opção C: <span id="resultadoC">0</span> votos</p>
         </div>
-
-        <button onclick="reiniciarVotacao()" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 mb-2">Reiniciar Votação</button>
-
-        <a href="index.html" class="mt-6 inline-block text-blue-500 hover:text-blue-700">Voltar para a Votação</a>
     </div>
+
+    <script>
+        const senhaCorreta = "admin123"; // Senha fixa para acesso ao painel
+
+        function verificarSenha() {
+            const senhaDigitada = document.getElementById("senha").value;
+            const mensagem = document.getElementById("mensagem");
+            if (senhaDigitada === senhaCorreta) {
+                // A senha está correta, mostramos os resultados
+                document.getElementById("resultado").classList.remove("hidden");
+                atualizarResultados();
+            } else {
+                mensagem.innerText = "Senha incorreta. Tente novamente.";
+            }
+        }
+
+        // Função para atualizar os resultados dos votos
+        function atualizarResultados() {
+            const resultadosRef = firebase.database().ref("votos");
+            resultadosRef.on("value", (snapshot) => {
+                const votos = snapshot.val();
+                document.getElementById("resultadoA").innerText = votos?.A || 0;
+                document.getElementById("resultadoB").innerText = votos?.B || 0;
+                document.getElementById("resultadoC").innerText = votos?.C || 0;
+            });
+        }
+    </script>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-
+    
     <script>
-      // Configuração do Firebase (substitua com suas credenciais)
+      // Configuração do Firebase
       const firebaseConfig = {
         apiKey: "AIzaSyCWSmAtAl_fdi2G4Q_-PCttLU7G8WTZ0ZM",
         authDomain: "sistemavotacao-4a2bb.firebaseapp.com",
@@ -38,37 +68,8 @@
 
       // Inicializa o Firebase
       firebase.initializeApp(firebaseConfig);
-
-      // Função para atualizar os resultados da votação em tempo real
-      function atualizarResultados() {
-        const resultadosRef = firebase.database().ref("votos");
-        resultadosRef.on("value", (snapshot) => {
-          const votos = snapshot.val();
-          document.getElementById("resultados").innerHTML = `
-            <p>Opção A: ${votos?.A || 0} votos</p>
-            <p>Opção B: ${votos?.B || 0} votos</p>
-            <p>Opção C: ${votos?.C || 0} votos</p>
-          `;
-        });
-      }
-
-      // Função para reiniciar a votação
-      function reiniciarVotacao() {
-        const votosRef = firebase.database().ref("votos");
-        votosRef.set({
-          A: 0,
-          B: 0,
-          C: 0
-        }).then(() => {
-          alert("Votação reiniciada!");
-        }).catch((error) => {
-          alert("Erro ao reiniciar a votação: " + error.message);
-        });
-      }
-
-      // Ativa a atualização em tempo real dos resultados
-      atualizarResultados();
     </script>
 </body>
 </html>
+
 
