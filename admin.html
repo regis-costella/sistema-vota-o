@@ -44,9 +44,9 @@
             const resultadosRef = firebase.database().ref("votos");
             resultadosRef.on("value", (snapshot) => {
                 const votos = snapshot.val();
-                document.getElementById("resultadoA").innerText = votos?.A || 0;
-                document.getElementById("resultadoB").innerText = votos?.B || 0;
-                document.getElementById("resultadoC").innerText = votos?.C || 0;
+                document.getElementById("resultadoA").innerText = Opção?.A || 0;
+                document.getElementById("resultadoB").innerText = Opção?.B || 0;
+                document.getElementById("resultadoC").innerText = Opção?.C || 0;
             });
         }
     </script>
