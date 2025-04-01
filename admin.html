@@ -22,6 +22,10 @@
             <p>Opção B: <span id="resultadoB">0</span> votos</p>
             <p>Opção C: <span id="resultadoC">0</span> votos</p>
         </div>
+        <button onclick="iniciarNovaVotacao()" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 mt-4 hidden" id="botaoNovaVotacao">
+    Iniciar Nova Votação
+</button>
+
     </div>
 
     <script>
@@ -33,6 +37,7 @@
             if (senhaDigitada === senhaCorreta) {
                 // A senha está correta, mostramos os resultados
                 document.getElementById("resultado").classList.remove("hidden");
+                document.getElementById("botaoNovaVotacao").classList.remove("hidden"); // Mostra o botão de nova votação
                 atualizarResultados();
             } else {
                 mensagem.innerText = "Senha incorreta. Tente novamente.";
@@ -49,6 +54,21 @@
                 document.getElementById("resultadoC").innerText = votos ["Opção C"] || 0;
             });
         }
+        function iniciarNovaVotacao() {
+    const votosRef = firebase.database().ref("votos");
+    votosRef.set({
+        "Opção A": 0,
+        "Opção B": 0,
+        "Opção C": 0
+    }).then(() => {
+        alert("Nova votação iniciada!");
+        atualizarResultados(); // Atualiza a exibição dos resultados
+    }).catch(error => {
+        console.error("Erro ao iniciar nova votação:", error);
+    });
+}
+
+        
     </script>
 
      <!-- Firebase Scripts -->
