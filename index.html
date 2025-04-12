@@ -14,6 +14,8 @@
         <!-- Mensagem de status do voto -->
         <p id="status" class="mt-4 text-red-600"></p>
 
+        <p id="contador" class="text-lg font-bold text-red-500 mt-4"></p>
+
         <div id="perguntasVotacao" class="mt-6"></div>
 
         <p id="mensagem" class="mt-4 text-gray-700"></p>
@@ -113,41 +115,79 @@
         });
     }
 
+    let intervaloVotante = null; //variável global para contador dos votantes
+
+    function atualizarContador() {
+    const timerRef = firebase.database().ref("config/votacao/tempoFinal");
+
+    timerRef.on("value", (snapshot) => {
+        const tempoFinal = snapshot.val();
+        const contadorElement = document.getElementById("contador");
+
+        // Cancela qualquer contador anterior
+        if (intervaloVotante !== null) {
+            clearInterval(intervaloVotante);
+        }
+
+        if (!tempoFinal) {
+            contadorElement.innerText = "Nenhuma votação ativa.";
+            return;
+        }
+
+        function atualizar() {
+            const tempoRestante = tempoFinal - Date.now();
+
+            if (tempoRestante <= 0) {
+                contadorElement.innerText = "Votação encerrada!";
+                document.getElementById("perguntasVotacao").innerHTML = "";
+                clearInterval(intervaloVotante); // Encerra o contador
+                intervaloVotante = null;
+                return;
+            }
+
+            const minutos = Math.floor(tempoRestante / 60000);
+            const segundos = Math.floor((tempoRestante % 60000) / 1000);
+            contadorElement.innerText = `Tempo restante: ${minutos}m ${segundos}s`;
+        }
+
+        atualizar(); // Exibe imediatamente
+        intervaloVotante = setInterval(atualizar, 1000);
+    });
+}
+
+
     // Atualizar a função de votação para considerar a pergunta
     function votarFirebase(pergunta, opcao) {
-    if (verificarVoto()) {
-        document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
-        return;
-    }
+    const timerRef = firebase.database().ref("config/votacao/tempoFinal");
 
-    console.log("Registrando voto para:", pergunta, opcao); // Debug para verificar se a função está sendo chamada
-
-    const votosRef = firebase.database().ref(`votos/${pergunta}/${opcao}`);
-
-    votosRef.transaction((votos) => {
-        console.log("Votos antes da atualização:", votos); // Debug para ver o valor atual no Firebase
-        return (votos || 0) + 1;
-    }, (error, committed, snapshot) => {
-        if (error) {
-            console.error("Erro ao registrar voto:", error);
-        } else if (!committed) {
-            console.warn("A transação não foi concluída");
-        } else {
-            console.log("Novo valor dos votos:", snapshot.val());
+    timerRef.once("value", (snapshot) => {
+        const tempoFinal = snapshot.val();
+        if (!tempoFinal || Date.now() >= tempoFinal) {
+            alert("A votação já foi encerrada!");
+            return;
         }
+
+        if (verificarVoto()) {
+            document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
+            return;
+        }
+
+        const votosRef = firebase.database().ref(`votos/${pergunta}/${opcao}`);
+        votosRef.transaction((votos) => (votos || 0) + 1);
+
+        localStorage.setItem("usuarioVotou", 'true');
+        document.getElementById("mensagem").innerText = `Você votou em "${pergunta}" - opção ${opcao}!`;
+        document.getElementById("status").innerText = "";
+        alert("Obrigado pelo seu voto!!!Voto registrado no Firebase!");
     });
-
-    // Registrar que o usuário votou
-    localStorage.setItem("usuarioVotou", 'true');
-    document.getElementById("mensagem").innerText = `Você votou em "${pergunta}" - opção ${opcao}!`;
-    document.getElementById("status").innerText = ""; // Limpa a mensagem de erro
-
-    alert("Obrigado pelo seu voto!!!Voto registrado no Firebase!");
 }
 
 
     // Chamar a função para carregar as perguntas ao iniciar a página
-    window.onload = carregarPerguntasParaVotacao;
+    window.onload = () => { 
+    carregarPerguntasParaVotacao();
+    atualizarContador();
+    };
 
     </script>
 </body>

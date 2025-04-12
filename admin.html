@@ -9,10 +9,13 @@
 <body class="bg-gradient-to-r from-blue-400 to-blue-700 min-h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
         <h1 class="text-4xl font-bold mb-4 text-gray-800">Painel do Administrador</h1>
-        <p class="text-gray-600 mb-6">Por favor, insira a senha para acessar o painel:</p>
+        <p id="mensagemLogin" class="text-gray-600 mb-6">Por favor, insira a senha para acessar o painel:</p>
 
-        <input type="password" id="senha" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Senha">
-        <button onclick="verificarSenha()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">Entrar</button>
+        <div id="loginBox">
+            <input type="password" id="senha" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Senha">
+            <button onclick="verificarSenha()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">Entrar</button>
+          </div>
+          
 
         <p id="mensagem" class="mt-4 text-red-600"></p>
 
@@ -20,6 +23,10 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Gerenciar Votação</h2>
             <input type="text" id="novaPergunta" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Digite a nova pergunta">
             <button onclick="adicionarPergunta()" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700">Adicionar Pergunta</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Definir Tempo da Votação</h2>
+            <input type="number" id="tempoVotacao" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Minutos">
+            <button onclick="iniciarVotacao()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">Iniciar Votação</button>
+            <p id="contadorAdmin" class="text-lg font-bold text-red-500 mt-4"></p>
             <div id="perguntas" class="mt-6"></div>
         </div>
 
@@ -39,16 +46,23 @@
         function verificarSenha() {
             const senhaDigitada = document.getElementById("senha").value;
             const mensagem = document.getElementById("mensagem");
-            if (senhaDigitada === senhaCorreta) {
-                document.getElementById("adminPanel").classList.remove("hidden");
-                document.getElementById("resultado").classList.remove("hidden");
-                document.getElementById("botaoNovaVotacao").classList.remove("hidden");
-                carregarPerguntas();
-                atualizarResultados();
-            } else {
-                mensagem.innerText = "Senha incorreta. Tente novamente.";
-            }
-        }
+
+        if (senhaDigitada === senhaCorreta) {
+        document.getElementById("adminPanel").classList.remove("hidden");
+        document.getElementById("resultado").classList.remove("hidden");
+        document.getElementById("botaoNovaVotacao").classList.remove("hidden");
+
+        // Esconde login e mensagem
+        document.getElementById("mensagemLogin").style.display = "none";
+        document.getElementById("loginBox").style.display = "none";
+
+        carregarPerguntas();
+        atualizarResultados();
+        exibirContadorAdmin();
+    } else {
+        mensagem.innerText = "Senha incorreta. Tente novamente.";
+    }
+}
 
         function adicionarPergunta() {
             const pergunta = document.getElementById("novaPergunta").value.trim();
@@ -60,6 +74,72 @@
                 });
             }
         }
+
+        function iniciarVotacao() {
+    const minutos = parseInt(document.getElementById("tempoVotacao").value);
+    if (isNaN(minutos) || minutos <= 0) {
+        alert("Insira um tempo válido!");
+        return;
+    }
+
+    // Verificar se há perguntas no Firebase antes de iniciar
+    firebase.database().ref("perguntas").once("value", (snapshot) => {
+        if (!snapshot.exists()) {
+            alert("Você precisa adicionar pelo menos uma pergunta antes de iniciar a votação.");
+            return;
+        }
+
+        const tempoFinal = Date.now() + minutos * 60 * 1000;
+        firebase.database().ref("config/votacao").set({ tempoFinal })
+            .then(() => {
+                alert(`Votação iniciada por ${minutos} minutos.`);
+            })
+            .catch((error) => {
+                console.error("Erro ao iniciar votação:", error);
+                alert("Erro ao iniciar a votação. Tente novamente.");
+            });
+    });
+}
+
+
+        function exibirContadorAdmin() {
+            const timerRef = firebase.database().ref("config/votacao/tempoFinal");
+
+            timerRef.on("value", (snapshot) => {
+                const tempoFinal = snapshot.val();
+                const contadorElement = document.getElementById("contadorAdmin");
+
+        // Cancela qualquer contador anterior
+            if (intervaloAdmin !== null) {
+                clearInterval(intervaloAdmin);
+            }
+
+            if (!tempoFinal) {
+            contadorElement.innerText = "Nenhuma votação ativa.";
+            return;
+            }
+
+        function atualizar() {
+            const tempoRestante = tempoFinal - Date.now();
+
+            if (tempoRestante <= 0) {
+                contadorElement.innerText = "Votação encerrada!";
+                clearInterval(intervaloAdmin); // Para o contador
+                intervaloAdmin = null;
+                return;
+            }
+
+            const minutos = Math.floor(tempoRestante / 60000);
+            const segundos = Math.floor((tempoRestante % 60000) / 1000);
+            contadorElement.innerText = `Tempo restante: ${minutos}m ${segundos}s`;
+        }
+
+        atualizar(); // Mostra imediatamente
+        intervaloAdmin = setInterval(atualizar, 1000); // Salva o novo ID do intervalo
+    });
+}
+
+
 
         function carregarPerguntas() {
             const perguntasRef = firebase.database().ref("perguntas");
@@ -93,10 +173,10 @@
         }
 
         function atualizarResultados() {
-        const resultadosRef = firebase.database().ref("votos");
-        resultadosRef.on("value", (snapshot) => {
+            const resultadosRef = firebase.database().ref("votos");
+                resultadosRef.on("value", (snapshot) => {
             const resultadosContainer = document.getElementById("resultadosVotacao");
-            resultadosContainer.innerHTML = ""; // Limpa antes de adicionar novos resultados
+                resultadosContainer.innerHTML = ""; // Limpa antes de adicionar novos resultados
 
             snapshot.forEach((childSnapshot) => {
                 const pergunta = childSnapshot.key;
@@ -122,13 +202,23 @@
 
         function iniciarNovaVotacao() {
             const votosRef = firebase.database().ref("votos");
-            votosRef.set({}).then(() => {
-                alert("Nova votação iniciada!");
-                atualizarResultados();
-            }).catch(error => {
-                console.error("Erro ao iniciar nova votação:", error);
-            });
-        }
+            const tempoRef = firebase.database().ref("config/votacao");
+
+            // Zera os votos e encerra o tempo
+            Promise.all([
+            votosRef.set({}),
+            tempoRef.set({ tempoFinal: Date.now() })  // força o encerramento imediato
+            ])
+                .then(() => {
+                alert("Nova votação iniciada! Os votos foram zerados e o tempo de votação foi encerrado.");
+            atualizarResultados();
+            exibirContadorAdmin();  // força atualização do contador
+        })
+            .catch(error => {
+            console.error("Erro ao iniciar nova votação:", error);
+        });
+    }
+
     </script>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
