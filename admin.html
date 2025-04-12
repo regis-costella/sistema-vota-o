@@ -16,82 +16,160 @@
 
         <p id="mensagem" class="mt-4 text-red-600"></p>
 
+        <div id="adminPanel" class="mt-6 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Gerenciar Votação</h2>
+            <input type="text" id="novaPergunta" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Digite a nova pergunta">
+            <button onclick="adicionarPergunta()" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700">Adicionar Pergunta</button>
+            <div id="perguntas" class="mt-6"></div>
+        </div>
+
         <div id="resultado" class="mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Resultados da Votação:</h2>
-            <p>Opção A: <span id="resultadoA">0</span> votos</p>
-            <p>Opção B: <span id="resultadoB">0</span> votos</p>
-            <p>Opção C: <span id="resultadoC">0</span> votos</p>
+            <div id="resultadosVotacao"></div>
         </div>
+        
         <button onclick="iniciarNovaVotacao()" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 mt-4 hidden" id="botaoNovaVotacao">
-    Iniciar Nova Votação
-</button>
-
+            Iniciar Nova Votação
+        </button>
     </div>
 
     <script>
-        const senhaCorreta = "admin123"; // Senha fixa para acesso ao painel
+        const senhaCorreta = "admin123";
 
         function verificarSenha() {
             const senhaDigitada = document.getElementById("senha").value;
             const mensagem = document.getElementById("mensagem");
             if (senhaDigitada === senhaCorreta) {
-                // A senha está correta, mostramos os resultados
+                document.getElementById("adminPanel").classList.remove("hidden");
                 document.getElementById("resultado").classList.remove("hidden");
-                document.getElementById("botaoNovaVotacao").classList.remove("hidden"); // Mostra o botão de nova votação
+                document.getElementById("botaoNovaVotacao").classList.remove("hidden");
+                carregarPerguntas();
                 atualizarResultados();
             } else {
                 mensagem.innerText = "Senha incorreta. Tente novamente.";
             }
         }
 
-        // Função para atualizar os resultados dos votos
-        function atualizarResultados() {
-            const resultadosRef = firebase.database().ref("votos");
-            resultadosRef.on("value", (snapshot) => {
-                const votos = snapshot.val();
-                document.getElementById("resultadoA").innerText = votos ["Opção A"] || 0;
-                document.getElementById("resultadoB").innerText = votos ["Opção B"] || 0;
-                document.getElementById("resultadoC").innerText = votos ["Opção C"] || 0;
+        function adicionarPergunta() {
+            const pergunta = document.getElementById("novaPergunta").value.trim();
+            if (pergunta) {
+                const perguntasRef = firebase.database().ref("perguntas");
+                perguntasRef.push({ texto: pergunta }).then(() => {
+                    document.getElementById("novaPergunta").value = "";
+                    carregarPerguntas();
+                });
+            }
+        }
+
+        function carregarPerguntas() {
+            const perguntasRef = firebase.database().ref("perguntas");
+            perguntasRef.on("value", (snapshot) => {
+                const perguntasContainer = document.getElementById("perguntas");
+                perguntasContainer.innerHTML = "";
+                snapshot.forEach((childSnapshot) => {
+                    const id = childSnapshot.key;
+                    const pergunta = childSnapshot.val().texto;
+                    
+                    perguntasContainer.innerHTML += `
+                        <div class='flex justify-between items-center bg-gray-100 p-2 rounded mb-2'>
+                            <p class='text-lg font-semibold text-gray-800'>${pergunta}</p>
+                            <button onclick="removerPergunta('${id}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700">Excluir</button>
+                        </div>
+                    `;
+                });
             });
         }
-        function iniciarNovaVotacao() {
-    const votosRef = firebase.database().ref("votos");
-    votosRef.set({
-        "Opção A": 0,
-        "Opção B": 0,
-        "Opção C": 0
-    }).then(() => {
-        alert("Nova votação iniciada!");
-        atualizarResultados(); // Atualiza a exibição dos resultados
-    }).catch(error => {
-        console.error("Erro ao iniciar nova votação:", error);
-    });
-}
 
-        
+        function removerPergunta(id) {
+            const perguntasRef = firebase.database().ref(`perguntas/${id}`);
+            perguntasRef.remove()
+                .then(() => {
+                    alert("Pergunta removida com sucesso!");
+                    carregarPerguntas();
+                })
+                .catch(error => {
+                    console.error("Erro ao remover pergunta:", error);
+                });
+        }
+
+        function atualizarResultados() {
+        const resultadosRef = firebase.database().ref("votos");
+        resultadosRef.on("value", (snapshot) => {
+            const resultadosContainer = document.getElementById("resultadosVotacao");
+            resultadosContainer.innerHTML = ""; // Limpa antes de adicionar novos resultados
+
+            snapshot.forEach((childSnapshot) => {
+                const pergunta = childSnapshot.key;
+                const votos = childSnapshot.val();
+
+                // Captura os votos das três opções
+                const votosSim = votos["Sim"] || 0;
+                const votosNao = votos["Não"] || 0;
+                const votosAbstencao = votos["Abstenção"] || 0;
+
+                // Adiciona ao painel os resultados formatados
+                resultadosContainer.innerHTML += `
+                    <div class="bg-gray-100 p-4 rounded-lg shadow mt-4">
+                        <p class="font-bold text-gray-800">${pergunta}</p>
+                        <p>✅ Sim: ${votosSim}</p>
+                        <p>❌ Não: ${votosNao}</p>
+                        <p>⚪ Abstenção: ${votosAbstencao}</p>
+                    </div>
+                `;
+            });
+        });
+    }
+
+        function iniciarNovaVotacao() {
+            const votosRef = firebase.database().ref("votos");
+            votosRef.set({}).then(() => {
+                alert("Nova votação iniciada!");
+                atualizarResultados();
+            }).catch(error => {
+                console.error("Erro ao iniciar nova votação:", error);
+            });
+        }
     </script>
 
-     <!-- Firebase Scripts -->
-     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <script>
-       // Configuração do Firebase
-      const firebaseConfig = {
-        apiKey: "AIzaSyCWSmAtAl_fdi2G4Q_-PCttLU7G8WTZ0ZM",
-        authDomain: "sistemavotacao-4a2bb.firebaseapp.com",
-        databaseURL: "https://sistemavotacao-4a2bb-default-rtdb.firebaseio.com",
-        projectId: "sistemavotacao-4a2bb",
-        storageBucket: "sistemavotacao-4a2bb.firebasestorage.app",
-        messagingSenderId: "878218533705",
-        appId: "1:878218533705:web:89149d476dde3396529898"
-      };
-      // Inicializa o Firebase
-      firebase.initializeApp(firebaseConfig);
-        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWSmAtAl_fdi2G4Q_-PCttLU7G8WTZ0ZM",
+            authDomain: "sistemavotacao-4a2bb.firebaseapp.com",
+            databaseURL: "https://sistemavotacao-4a2bb-default-rtdb.firebaseio.com",
+            projectId: "sistemavotacao-4a2bb",
+            storageBucket: "sistemavotacao-4a2bb.firebasestorage.app",
+            messagingSenderId: "878218533705",
+            appId: "1:878218533705:web:89149d476dde3396529898"
+        };
+        firebase.initializeApp(firebaseConfig);
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

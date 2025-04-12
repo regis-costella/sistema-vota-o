@@ -14,9 +14,7 @@
         <!-- Mensagem de status do voto -->
         <p id="status" class="mt-4 text-red-600"></p>
 
-        <button onclick="votarFirebase('Opção A')" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700 mb-2">Votar na Opção A</button>
-        <button onclick="votarFirebase('Opção B')" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mb-2">Votar na Opção B</button>
-        <button onclick="votarFirebase('Opção C')" class="w-full bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700 mb-2">Votar na Opção C</button>
+        <div id="perguntasVotacao" class="mt-6"></div>
 
         <p id="mensagem" class="mt-4 text-gray-700"></p>
 
@@ -49,25 +47,168 @@
         }
 
         // Função para registrar votos no Firebase
-        function votarFirebase(opcao) {
-            if (verificarVoto()) {
-                document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
-                return;  // Impede o voto se o usuário já votou
-            }
+        function votarFirebase(pergunta, opcao) {
+    if (verificarVoto()) {
+        document.getElementById("status").innerText = "Obrigado pelo seu voto! Não será possível votar novamente nesta votação.";
+        return;
+    }
 
-            const votosRef = firebase.database().ref("votos/" + opcao);
-            votosRef.transaction((votos) => (votos || 0) + 1);
-
+    const votosRef = firebase.database().ref(`votos/${pergunta}/${opcao}`);
+    votosRef.transaction((votos) => (votos || 0) + 1)
+        .then(() => {
             // Registra que o usuário votou
             localStorage.setItem("usuarioVotou", 'true');
-            document.getElementById("mensagem").innerText = `Você votou em ${opcao}!`;
-            document.getElementById("status").innerText = "";  // Limpa a mensagem de erro
-
+            document.getElementById("mensagem").innerText = `Você votou em "${pergunta}" - opção ${opcao}!`;
+            document.getElementById("status").innerText = ""; // Limpa a mensagem de erro
             alert("Voto registrado no Firebase!");
+        })
+        .catch((error) => {
+            console.error("Erro ao registrar voto:", error);
+            alert("Erro ao registrar voto. Tente novamente.");
+        });
+}
+        
+    // Função para carregar perguntas do Firebase e exibir na tela
+    function carregarPerguntasParaVotacao() {
+        const perguntasRef = firebase.database().ref("perguntas");
+        perguntasRef.on("value", (snapshot) => {
+            const container = document.getElementById("perguntasVotacao");
+            container.innerHTML = ""; // Limpa antes de adicionar novas perguntas
+
+            snapshot.forEach((childSnapshot) => {
+                const pergunta = childSnapshot.val().texto;
+                
+                // Criar um bloco para a pergunta e os botões de votação
+                const divPergunta = document.createElement("div");
+                divPergunta.className = "mb-4 p-4 bg-gray-100 rounded-lg shadow";
+
+                // Criar o texto da pergunta
+                const pPergunta = document.createElement("p");
+                pPergunta.className = "text-lg font-semibold text-gray-800";
+                pPergunta.innerText = pergunta;
+
+                // Criar botões de votação
+                const botaoSim = document.createElement("button");
+                botaoSim.className = "w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700 mt-2";
+                botaoSim.innerText = "Sim";
+                botaoSim.onclick = () => votarFirebase(pergunta, "Sim");
+
+                const botaoNao = document.createElement("button");
+                botaoNao.className = "w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 mt-2";
+                botaoNao.innerText = "Não";
+                botaoNao.onclick = () => votarFirebase(pergunta, "Não");
+
+                const botaoAbstencao = document.createElement("button");
+                botaoAbstencao.className = "w-full bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-700 mt-2";
+                botaoAbstencao.innerText = "Abstenção";
+                botaoAbstencao.onclick = () => votarFirebase(pergunta, "Abstenção");
+
+                // Adicionar tudo ao container
+                divPergunta.appendChild(pPergunta);
+                divPergunta.appendChild(botaoSim);
+                divPergunta.appendChild(botaoNao);
+                divPergunta.appendChild(botaoAbstencao);
+                container.appendChild(divPergunta);
+            });
+        });
+    }
+
+    // Atualizar a função de votação para considerar a pergunta
+    function votarFirebase(pergunta, opcao) {
+    if (verificarVoto()) {
+        document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
+        return;
+    }
+
+    console.log("Registrando voto para:", pergunta, opcao); // Debug para verificar se a função está sendo chamada
+
+    const votosRef = firebase.database().ref(`votos/${pergunta}/${opcao}`);
+
+    votosRef.transaction((votos) => {
+        console.log("Votos antes da atualização:", votos); // Debug para ver o valor atual no Firebase
+        return (votos || 0) + 1;
+    }, (error, committed, snapshot) => {
+        if (error) {
+            console.error("Erro ao registrar voto:", error);
+        } else if (!committed) {
+            console.warn("A transação não foi concluída");
+        } else {
+            console.log("Novo valor dos votos:", snapshot.val());
         }
+    });
+
+    // Registrar que o usuário votou
+    localStorage.setItem("usuarioVotou", 'true');
+    document.getElementById("mensagem").innerText = `Você votou em "${pergunta}" - opção ${opcao}!`;
+    document.getElementById("status").innerText = ""; // Limpa a mensagem de erro
+
+    alert("Obrigado pelo seu voto!!!Voto registrado no Firebase!");
+}
+
+
+    // Chamar a função para carregar as perguntas ao iniciar a página
+    window.onload = carregarPerguntasParaVotacao;
+
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
