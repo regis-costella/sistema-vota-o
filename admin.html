@@ -40,21 +40,23 @@
         </button>
     </div>
 
+    
     <script>
         const senhaCorreta = "admin123";
 
-        function verificarSenha() {
-            const senhaDigitada = document.getElementById("senha").value;
-            const mensagem = document.getElementById("mensagem");
+    function verificarSenha() {
+        const senhaDigitada = document.getElementById("senha").value;
+        const mensagem = document.getElementById("mensagem");
 
         if (senhaDigitada === senhaCorreta) {
-        document.getElementById("adminPanel").classList.remove("hidden");
-        document.getElementById("resultado").classList.remove("hidden");
-        document.getElementById("botaoNovaVotacao").classList.remove("hidden");
+            document.getElementById("adminPanel").classList.remove("hidden");
+            document.getElementById("resultado").classList.remove("hidden");
+            document.getElementById("botaoNovaVotacao").classList.remove("hidden");
 
-        // Esconde login e mensagem
-        document.getElementById("mensagemLogin").style.display = "none";
-        document.getElementById("loginBox").style.display = "none";
+        // Limpa e esconde mensagens de login
+            document.getElementById("mensagemLogin").style.display = "none";
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("mensagem").innerText = ""; // 👈 limpa o erro
 
         carregarPerguntas();
         atualizarResultados();
@@ -63,6 +65,7 @@
         mensagem.innerText = "Senha incorreta. Tente novamente.";
     }
 }
+
 
         function adicionarPergunta() {
             const pergunta = document.getElementById("novaPergunta").value.trim();
