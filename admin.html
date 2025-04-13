@@ -221,32 +221,36 @@ function adicionarPergunta() {
         }
 
         function atualizarResultados() {
-            const resultadosRef = firebase.database().ref("votos");
-                resultadosRef.on("value", (snapshot) => {
-            const resultadosContainer = document.getElementById("resultadosVotacao");
-                resultadosContainer.innerHTML = ""; // Limpa antes de adicionar novos resultados
+    const resultadosRef = firebase.database().ref("votos");
+    const resultadosContainer = document.getElementById("resultadosVotacao");
 
-            snapshot.forEach((childSnapshot) => {
-                const pergunta = childSnapshot.key;
-                const votos = childSnapshot.val();
+    resultadosRef.on("value", (snapshot) => {
+        resultadosContainer.innerHTML = ""; // Limpa antes de adicionar novos resultados
 
-                // Captura os votos das três opções
-                const votosSim = votos["Sim"] || 0;
-                const votosNao = votos["Não"] || 0;
-                const votosAbstencao = votos["Abstenção"] || 0;
+        snapshot.forEach((childSnapshot) => {
+            const pergunta = childSnapshot.key;
+            const votos = childSnapshot.val();
 
-                // Adiciona ao painel os resultados formatados
-                resultadosContainer.innerHTML += `
-                    <div class="bg-gray-100 p-4 rounded-lg shadow mt-4">
-                        <p class="font-bold text-gray-800">${pergunta}</p>
-                        <p>✅ Sim: ${votosSim}</p>
-                        <p>❌ Não: ${votosNao}</p>
-                        <p>⚪ Abstenção: ${votosAbstencao}</p>
-                    </div>
-                `;
-            });
+            let resultadoHTML = `
+                <div class="bg-gray-100 p-4 rounded-lg shadow mt-4">
+                    <p class="font-bold text-gray-800">${pergunta}</p>
+            `;
+
+            for (const opcao in votos) {
+                const icone = opcao.toLowerCase().includes("sim") ? "✅" :
+                              opcao.toLowerCase().includes("não") ? "❌" :
+                              opcao.toLowerCase().includes("absten") ? "⚪" :
+                              "🔘";
+
+                resultadoHTML += `<p>${icone} ${opcao}: ${votos[opcao]} voto(s)</p>`;
+            }
+
+            resultadoHTML += `</div>`;
+            resultadosContainer.innerHTML += resultadoHTML;
         });
-    }
+    });
+}
+
 
         function iniciarNovaVotacao() {
             const votosRef = firebase.database().ref("votos");

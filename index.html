@@ -83,6 +83,15 @@
             return;
         }
 
+        // Resetar o status de voto se a pergunta for nova
+        const perguntaAtual = Object.values(snapshot.val())[0]?.texto;
+        const perguntaAnterior = localStorage.getItem("perguntaAnterior");
+
+        if (perguntaAtual && perguntaAtual !== perguntaAnterior) {
+            localStorage.setItem("usuarioVotou", 'false'); // permite votar novamente
+            localStorage.setItem("perguntaAnterior", perguntaAtual); // atualiza a pergunta atual
+        }
+
         snapshot.forEach((childSnapshot) => {
             const dados = childSnapshot.val();
             const textoPergunta = dados.texto;
