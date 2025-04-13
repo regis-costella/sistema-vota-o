@@ -21,8 +21,17 @@
 
         <div id="adminPanel" class="mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Gerenciar Votação</h2>
-            <input type="text" id="novaPergunta" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Digite a nova pergunta">
-            <button onclick="adicionarPergunta()" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700">Adicionar Pergunta</button>
+            <input type="text" id="novaPergunta" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-2" placeholder="Digite a nova pergunta">
+
+            <div id="opcoesContainer" class="mb-4">
+            <input type="text" class="opcao bg-gray-100 text-gray-800 py-2 px-4 rounded mb-2 w-full" placeholder="Opção 1">
+            <input type="text" class="opcao bg-gray-100 text-gray-800 py-2 px-4 rounded mb-2 w-full" placeholder="Opção 2">
+            </div>
+
+            <button onclick="adicionarOpcao()" class="bg-gray-300 text-gray-800 px-2 py-1 rounded hover:bg-gray-400 mb-4">+ Adicionar Opção</button>
+
+            <button onclick="adicionarPergunta()" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700">Salvar Pergunta</button>
+
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Definir Tempo da Votação</h2>
             <input type="number" id="tempoVotacao" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded mb-4" placeholder="Minutos">
             <button onclick="iniciarVotacao()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">Iniciar Votação</button>
@@ -43,6 +52,7 @@
     
     <script>
         const senhaCorreta = "admin123";
+
         let intervaloAdmin = null;
 
     function verificarSenha() {
@@ -68,16 +78,50 @@
 }
 
 
-        function adicionarPergunta() {
-            const pergunta = document.getElementById("novaPergunta").value.trim();
-            if (pergunta) {
-                const perguntasRef = firebase.database().ref("perguntas");
-                perguntasRef.push({ texto: pergunta }).then(() => {
-                    document.getElementById("novaPergunta").value = "";
-                    carregarPerguntas();
-                });
-            }
-        }
+function adicionarPergunta() {
+    const textoPergunta = document.getElementById("novaPergunta").value.trim();
+    const opcoesInputs = document.querySelectorAll(".opcao");
+
+    if (!textoPergunta) {
+        alert("Digite a pergunta.");
+        return;
+    }
+
+    const opcoes = {};
+    opcoesInputs.forEach((input) => {
+        const valor = input.value.trim();
+        if (valor) opcoes[valor] = 0; // começa com 0 votos
+    });
+
+    if (Object.keys(opcoes).length < 2) {
+        alert("Informe pelo menos duas opções de resposta.");
+        return;
+    }
+
+    const novaPerguntaRef = firebase.database().ref("perguntas").push();
+    novaPerguntaRef.set({
+        texto: textoPergunta,
+        opcoes: opcoes
+    }).then(() => {
+        document.getElementById("novaPergunta").value = "";
+        document.getElementById("opcoesContainer").innerHTML = "";
+        adicionarOpcao(); // reinicia com duas opções
+        adicionarOpcao();
+        carregarPerguntas();
+        alert("Pergunta adicionada com sucesso!");
+    });
+}
+
+
+        function adicionarOpcao() {
+            const container = document.getElementById("opcoesContainer");
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "opcao bg-gray-100 text-gray-800 py-2 px-4 rounded mb-2 w-full";
+            input.placeholder = `Opção ${container.children.length + 1}`;
+            container.appendChild(input);
+}
+
 
         function iniciarVotacao() {
     const minutos = parseInt(document.getElementById("tempoVotacao").value);

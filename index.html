@@ -72,48 +72,44 @@
         
     // Função para carregar perguntas do Firebase e exibir na tela
     function carregarPerguntasParaVotacao() {
-        const perguntasRef = firebase.database().ref("perguntas");
-        perguntasRef.on("value", (snapshot) => {
-            const container = document.getElementById("perguntasVotacao");
-            container.innerHTML = ""; // Limpa antes de adicionar novas perguntas
+    const perguntasRef = firebase.database().ref("perguntas");
 
-            snapshot.forEach((childSnapshot) => {
-                const pergunta = childSnapshot.val().texto;
-                
-                // Criar um bloco para a pergunta e os botões de votação
-                const divPergunta = document.createElement("div");
-                divPergunta.className = "mb-4 p-4 bg-gray-100 rounded-lg shadow";
+    perguntasRef.on("value", (snapshot) => {
+        const container = document.getElementById("perguntasVotacao");
+        container.innerHTML = ""; // Limpa antes de adicionar novas perguntas
 
-                // Criar o texto da pergunta
-                const pPergunta = document.createElement("p");
-                pPergunta.className = "text-lg font-semibold text-gray-800";
-                pPergunta.innerText = pergunta;
+        if (!snapshot.exists()) {
+            container.innerHTML = "<p class='text-white'>Nenhuma pergunta disponível no momento.</p>";
+            return;
+        }
 
-                // Criar botões de votação
-                const botaoSim = document.createElement("button");
-                botaoSim.className = "w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700 mt-2";
-                botaoSim.innerText = "Sim";
-                botaoSim.onclick = () => votarFirebase(pergunta, "Sim");
+        snapshot.forEach((childSnapshot) => {
+            const dados = childSnapshot.val();
+            const textoPergunta = dados.texto;
+            const opcoes = dados.opcoes || {};
 
-                const botaoNao = document.createElement("button");
-                botaoNao.className = "w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 mt-2";
-                botaoNao.innerText = "Não";
-                botaoNao.onclick = () => votarFirebase(pergunta, "Não");
+            const divPergunta = document.createElement("div");
+            divPergunta.className = "mb-6 p-4 bg-gray-100 rounded-lg shadow";
 
-                const botaoAbstencao = document.createElement("button");
-                botaoAbstencao.className = "w-full bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-700 mt-2";
-                botaoAbstencao.innerText = "Abstenção";
-                botaoAbstencao.onclick = () => votarFirebase(pergunta, "Abstenção");
+            const pPergunta = document.createElement("p");
+            pPergunta.className = "text-lg font-semibold text-gray-800 mb-2";
+            pPergunta.innerText = textoPergunta;
 
-                // Adicionar tudo ao container
-                divPergunta.appendChild(pPergunta);
-                divPergunta.appendChild(botaoSim);
-                divPergunta.appendChild(botaoNao);
-                divPergunta.appendChild(botaoAbstencao);
-                container.appendChild(divPergunta);
-            });
+            divPergunta.appendChild(pPergunta);
+
+            for (const opcao in opcoes) {
+                const botao = document.createElement("button");
+                botao.className = "w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mt-2";
+                botao.innerText = opcao;
+                botao.onclick = () => votarFirebase(textoPergunta, opcao);
+                divPergunta.appendChild(botao);
+            }
+
+            container.appendChild(divPergunta);
         });
-    }
+    });
+}
+
 
     let intervaloVotante = null; //variável global para contador dos votantes
 
