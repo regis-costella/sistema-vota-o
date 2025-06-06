@@ -43,9 +43,9 @@
         firebase.initializeApp(firebaseConfig);
 
         // Função para verificar se o usuário já votou
-        function verificarVoto() {
-            const usuarioVotou = localStorage.getItem("usuarioVotou");
-            return usuarioVotou === 'true';  // Retorna true se o usuário já votou
+        //function verificarVoto() {
+         //   const usuarioVotou = localStorage.getItem("usuarioVotou");
+         //   return usuarioVotou === 'true';  // Retorna true se o usuário já votou
        }
 
         // Função para registrar votos no Firebase
@@ -172,9 +172,9 @@
             return;
         }
 
-       // if (verificarVoto()) {
-         //   document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
-           // return;
+        if (verificarVoto()) {
+          document.getElementById("status").innerText = "Você já votou! Não é possível votar novamente.";
+          return;
         }
 
         const votosRef = firebase.database().ref(`votos/${pergunta}/${opcao}`);
